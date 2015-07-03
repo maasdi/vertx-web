@@ -1,4 +1,4 @@
-= Vert.x 3.0 Web Application
+= Vert.x 3.0 Web Application [![Build Status](https://travis-ci.org/maasdi/vertx-web.svg?branch=master)](https://travis-ci.org/maasdi/vertx-web)
 
 This project use to learn how to create simple webapp with Vert.x 3.0.
 
