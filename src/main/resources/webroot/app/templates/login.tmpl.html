@@ -1,0 +1,24 @@
+<div class="col-sm-4 col-sm-offset-4">
+    <div class="portal col-xs-12">
+        <h4 class="col-xs-12">Login</h4>
+        <hr/>
+        <div ng-if="login.message" class="col-xs-12">
+            <div class="alert alert-danger">{{login.message}}</div>
+        </div>
+        <form class="col-xs-12" ng-submit="login.submit(login.user)">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input id="username" name="username" class="form-control" type="text"
+                       ng-model="login.user.username" placeholder="Enter username"/>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" name="password" class="form-control" type="password"
+                       ng-model="login.user.password" placeholder="Enter password"/>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-info btn-lg">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,5 @@
+{
+  "port" : 8181,
+  "db.url" : "jdbc:hsqldb:mem:vertx-web?shutdown=true",
+  "db.driver_class" : "org.hsqldb.jdbcDriver"
+}

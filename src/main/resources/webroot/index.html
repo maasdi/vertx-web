@@ -1,0 +1,49 @@
+<!doctype html>
+<html ng-app="VertxWeb">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Vertx Web</title>
+
+        <link rel="stylesheet" href="assets/css/normalize.css">
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <link rel="stylesheet" href="assets/css/app.css">
+
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/bootstrap.min.js"></script>
+        <script src="assets/js/angular.min.js"></script>
+        <script src="assets/js/angular-ui-router.min.js"></script>
+        <script src="assets/js/angular-storage.js"></script>
+        <script src="assets/js/angular-animate.min.js"></script>
+
+    </head>
+    <body ng-controller="MainCtrl as main" ng-cloak>
+        <nav class="navbar navbar-default">
+            <div ng-if="main.currentUser" class="col-sm-12">
+                <ul class="nav">
+                    <li class="dropdown">
+                        <a href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"> <i
+                                class="icon-user"></i>Welcome <b>{{main.currentUser.username}}</b> <i class="caret"></i></a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a tabindex="-1" href="#/users">User</a>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <a tabindex="-1" href="#" ng-click="main.logout()">Logout</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <div class="container-fluid">
+            <div class="row">
+                <div ui-view></div>
+            </div>
+        </div>
+
+        <script src="app/app.js"></script>
+    </body>
+</html>
+

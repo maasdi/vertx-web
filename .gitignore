@@ -1,0 +1,6 @@
+.vertx
+file-uploads/*
+.idea
+*.iml
+build/*
+.gradle/*
