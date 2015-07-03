@@ -1,4 +1,11 @@
 language: java
 
+sudo: false
+
 jdk:
   - oraclejdk8
+
+install:
+  - ./gradlew --version
+  - ./gradlew clean
+  - ./gradlew assemble
