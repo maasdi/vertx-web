@@ -59,8 +59,9 @@ public class ItemHandlerTest extends BaseTest {
             try {
                 context.assertTrue(rs.getRows().size() > 0);
                 JsonObject row = rs.getRows().get(0);
+                context.assertNotNull(row.getInteger("ID"));
 
-                client.getNow(port, host, "/api/items/" + row.getInteger("id"), resp -> {
+                client.getNow(port, host, "/api/items/" + row.getInteger("ID"), resp -> {
                     resp.bodyHandler(body -> {
                         try {
                             context.assertEquals(200, resp.statusCode());
@@ -86,8 +87,9 @@ public class ItemHandlerTest extends BaseTest {
             try {
                 context.assertTrue(rs.getRows().size() > 0);
                 JsonObject row = rs.getRows().get(0);
+                context.assertNotNull(row.getInteger("ID"));
 
-                client.put(port, host, "/api/items/" + row.getInteger("id"), resp -> {
+                client.put(port, host, "/api/items/" + row.getInteger("ID"), resp -> {
                     resp.bodyHandler(body -> {
                         try {
                             context.assertEquals(200, resp.statusCode());
@@ -113,8 +115,9 @@ public class ItemHandlerTest extends BaseTest {
             try {
                 context.assertTrue(rs.getRows().size() > 0);
                 JsonObject row = rs.getRows().get(0);
+                context.assertNotNull(row.getInteger("ID"));
 
-                client.delete(port, host, "/api/items/" + row.getInteger("id"), resp -> {
+                client.delete(port, host, "/api/items/" + row.getInteger("ID"), resp -> {
                     try {
                         context.assertEquals(200, resp.statusCode());
                     } finally {
