@@ -36,7 +36,7 @@ public class AppUtil {
     private AppUtil() {
         try {
             URL url = getClass().getClassLoader().getResource(CONFIG_NAME);
-            LOGGER.debug("Config URL : {}", url);
+            LOGGER.debug("Initialize configuration from path : {}", url);
             ObjectMapper mapper = new ObjectMapper();
             config = new JsonObject((Map<String, Object>) mapper.readValue(url, Map.class));
         } catch (Exception ex) {

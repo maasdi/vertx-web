@@ -42,31 +42,38 @@ public class Server extends AbstractVerticle {
 
         router = Router.router(vertx);
 
-        router.route().handler(CookieHandler.create());
-        router.route().handler(BodyHandler.create());
-        router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+        vertx.<Router>executeBlocking(future -> {
+            router.route().handler(CookieHandler.create());
+            router.route().handler(BodyHandler.create());
+            router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 
-        AuthProvider authProvider = getAuthProvider();
-        router.route().handler(UserSessionHandler.create(authProvider));
+            AuthProvider authProvider = getAuthProvider();
+            router.route().handler(UserSessionHandler.create(authProvider));
 
-        router.route("/api/*").handler(getAPIInterceptorHandler());
+            router.route("/api/*").handler(getAPIInterceptorHandler());
 
-        // registerHandlers
-        registerHandlers();
+            // registerHandlers
+            registerHandlers();
 
-        // Handles the actual login
-        router.route("/login").handler(new FormLoginHandlerImpl(authProvider));
-        // Implement logout
-        router.route("/logout").handler(context -> {
-            context.clearUser();
-            // Redirect back to the index page
-            context.response().putHeader("location", "/").setStatusCode(302).end();
+            // Handles the actual login
+            router.route("/login").handler(new FormLoginHandlerImpl(authProvider));
+            // Implement logout
+            router.route("/logout").handler(context -> {
+                context.clearUser();
+                // Redirect back to the index page
+                context.response().putHeader("location", "/").setStatusCode(302).end();
+            });
+
+            // Must be the latest handler to register
+            router.route().handler(StaticHandler.create());
+
+            vertx.createHttpServer().requestHandler(router::accept).listen(port);
+
+            future.complete(router);
+        }, res -> {
+            LOGGER.debug("Server started successfully..");
         });
 
-        // Must be the latest handler to register
-        router.route().handler(StaticHandler.create());
-
-        vertx.createHttpServer().requestHandler(router::accept).listen(port);
     }
 
     protected AuthProvider getAuthProvider() {
@@ -77,13 +84,17 @@ public class Server extends AbstractVerticle {
         return new APIInterceptorHandler(getAuthProvider());
     }
 
-    private void registerHandlers() throws Exception {
+    private void registerHandlers() {
         LOGGER.debug("Register available request handlers...");
         // Dynamically set handlers from package 'app.web.handlers.*'
         Reflections reflections = new Reflections("app.web.handlers");
         Set<Class<?>> handlers = reflections.getTypesAnnotatedWith(RouteHandler.class);
         for (Class<?> handler : handlers) {
-            registerNewHandler(handler);
+            try {
+                registerNewHandler(handler);
+            } catch (Exception e) {
+                LOGGER.error("Error register {}", handler);
+            }
         }
     }
 
