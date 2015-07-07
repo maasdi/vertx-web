@@ -8,7 +8,6 @@ import app.web.annotations.RouteMethod;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -42,7 +41,6 @@ public class UserHandler {
                         users.add(result);
                     }
 
-                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
                     ctx.response().end(users.encode());
 
                     SQLUtil.close(conn.result());
@@ -65,7 +63,7 @@ public class UserHandler {
                 LOGGER.error("Username and Password cannot be null");
                 JsonObject error = new JsonObject();
                 error.put("error", "Username and Password cannot be null");
-                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+                ctx.response().setStatusCode(205).end(error.encode());
             }
 
             String salt = AppUtil.computeHash(username, null, "SHA-512");
@@ -86,7 +84,7 @@ public class UserHandler {
                         LOGGER.error("User with username {} already exists..", username);
                         JsonObject error = new JsonObject();
                         error.put("error", "User with username " + username+ " already exists");
-                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+                        ctx.response().setStatusCode(205).end(error.encode());
                     }
 
                     JsonArray params = new JsonArray();
@@ -122,11 +120,11 @@ public class UserHandler {
                 SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), res -> {
                     SQLUtil.close(conn.result());
                     if (res.getRows().size() == 1) {
-                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(res.getRows().get(0).encode());
+                        ctx.response().end(res.getRows().get(0).encode());
                     } else {
                         JsonObject error = new JsonObject();
                         error.put("error", "Record not found");
-                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+                        ctx.response().setStatusCode(205).end(error.encode());
                     }
                 });
             });
@@ -159,7 +157,7 @@ public class UserHandler {
                 SQLUtil.update(conn.result(), "update user set first_name = ?, last_name = ?, address = ? where username = ?", params, res -> {
                     SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), rs -> {
                         SQLUtil.close(conn.result());
-                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(rs.getRows().get(0).encode());
+                        ctx.response().end(rs.getRows().get(0).encode());
                     });
                 });
             });
@@ -184,7 +182,7 @@ public class UserHandler {
 
                 SQLUtil.update(conn.result(), "delete from user where username = ?", new JsonArray().add(username), res -> {
                     SQLUtil.close(conn.result());
-                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end();
+                    ctx.response().end();
                 });
 
             });

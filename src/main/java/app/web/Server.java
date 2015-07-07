@@ -44,12 +44,13 @@ public class Server extends AbstractVerticle {
 
         vertx.<Router>executeBlocking(future -> {
             router.route().handler(CookieHandler.create());
-            router.route().handler(BodyHandler.create());
+            router.route().handler(BodyHandler.create().setUploadsDirectory(AppUtil.getUploadDir()));
             router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
 
             AuthProvider authProvider = getAuthProvider();
             router.route().handler(UserSessionHandler.create(authProvider));
 
+            router.route("/secured/*").handler(RedirectAuthHandler.create(authProvider, "/"));
             router.route("/api/*").handler(getAPIInterceptorHandler());
 
             // registerHandlers

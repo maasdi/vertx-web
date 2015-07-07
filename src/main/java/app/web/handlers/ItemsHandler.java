@@ -7,7 +7,6 @@ import app.web.annotations.RouteMapping;
 import app.web.annotations.RouteMethod;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
@@ -41,7 +40,7 @@ public class ItemsHandler {
                     }
 
                     SQLUtil.close(conn.result());
-                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(items.encode());
+                    ctx.response().end(items.encode());
                 });
             });
         };

@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +90,11 @@ public class AppUtil {
         } catch (NoSuchAlgorithmException e) {
             throw new VertxException(e);
         }
+    }
+
+    public static String getUploadDir() {
+        return AppUtil.configStr("upload.path") == null ?
+                BodyHandler.DEFAULT_UPLOADS_DIRECTORY : AppUtil.configStr("upload.path");
     }
 
 }

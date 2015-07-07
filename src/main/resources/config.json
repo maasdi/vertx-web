@@ -3,5 +3,6 @@
   "db.url" : "jdbc:mysql://localhost:3306/vertx-web",
   "db.driver_class" : "com.mysql.jdbc.Driver",
   "db.user" : "root",
-  "db.password" : "root"
+  "db.password" : "root",
+  "upload.path" : "file-uploads"
 }
