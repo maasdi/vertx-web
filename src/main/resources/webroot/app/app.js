@@ -28,7 +28,7 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
                 controllerAs: 'useradd'
             })
             .state('userEdit', {
-                url: '/users/:id',
+                url: '/users/:username',
                 templateUrl: 'app/templates/useredit.tmpl.html',
                 controller: 'UserEditCtrl',
                 controllerAs: 'useredit'
@@ -88,16 +88,16 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
             return $http.post(ENDPOINT_URI + '/users', user);
         };
 
-        service.getUserById = function(id) {
-            return $http.get(ENDPOINT_URI + '/users/' + id);
+        service.getUserById = function(username) {
+            return $http.get(ENDPOINT_URI + '/users/' + username);
         };
 
         service.updateUser = function(user) {
-            return $http.put(ENDPOINT_URI + '/users/' + user.id, user);
+            return $http.put(ENDPOINT_URI + '/users/' + user.username, user);
         };
 
-        service.deleteUser = function(id) {
-            return $http.delete(ENDPOINT_URI + '/users/' + id);
+        service.deleteUser = function(username) {
+            return $http.delete(ENDPOINT_URI + '/users/' + username);
         };
     })
     .service('LoginService', function($http, BASE_URI) {
@@ -123,32 +123,24 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
         var service = this,
             path = '/items';
 
-        function getUrl() {
-            return ENDPOINT_URI + path;
-        }
-
-        function getUrlForId(itemId) {
-            return getUrl(path) + itemId;
-        }
-
         service.all = function () {
-            return $http.get(getUrl());
+            return $http.get(ENDPOINT_URI + path);
         };
 
         service.fetch = function (itemId) {
-            return $http.get(getUrlForId(itemId));
+            return $http.get(ENDPOINT_URI + path + "/" + itemId);
         };
 
         service.create = function (item) {
-            return $http.post(getUrl(), item);
+            return $http.post(ENDPOINT_URI + path, item);
         };
 
         service.update = function (itemId, item) {
-            return $http.put(getUrlForId(itemId), item);
+            return $http.put(ENDPOINT_URI + path + "/" + itemId, item);
         };
 
         service.destroy = function (itemId) {
-            return $http.delete(getUrlForId(itemId));
+            return $http.delete(ENDPOINT_URI + path + "/" + itemId);
         };
     })
     .controller('LoginCtrl', function($rootScope, $state, LoginService, UserContext){
@@ -308,8 +300,8 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
     })
     .controller('UserEditCtrl', function($state, $scope, $stateParams, UserService) {
 
-        function getById(id) {
-            UserService.getUserById(id)
+        function getById(username) {
+            UserService.getUserById(username)
                 .then(function(response) {
                     $scope.user = response.data;
                 }, function(error) {
@@ -329,7 +321,7 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
         $scope.delete = function(user) {
             var deleted = confirm('Are you absolutely sure you want to delete?');
             if (deleted) {
-                UserService.deleteUser(user.id)
+                UserService.deleteUser(user.username)
                     .then(function(response) {
                         $state.go('users');
                     }, function(error) {
@@ -338,7 +330,7 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
             }
         };
 
-        getById($stateParams.id);
+        getById($stateParams.username);
 
     })
 ;

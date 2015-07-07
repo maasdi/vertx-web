@@ -15,7 +15,7 @@ public class LoginHandlerTest extends BaseTest {
     public void testUnautorized(TestContext context) {
         HttpClient client = vertx.createHttpClient();
         Async async = context.async();
-        client.getNow(port, "localhost", "/api/users", resp -> {
+        client.getNow(port, host, "/api/users", resp -> {
             try {
                 context.assertEquals(401, resp.statusCode());
             } finally {
@@ -29,10 +29,10 @@ public class LoginHandlerTest extends BaseTest {
     public void testLogin(TestContext context) {
         HttpClient client = vertx.createHttpClient();
         Async async = context.async();
-        client.post(port, "localhost", "/login", resp -> {
+        client.post(port, host, "/login", resp -> {
             resp.bodyHandler(body -> {
                 try {
-                    context.assertEquals("{\"username\":\"tim\"}", body.toString());
+                    context.assertEquals("{\"username\":\"admin\"}", body.toString());
                     context.assertEquals(200, resp.statusCode());
                 } finally {
                     client.close();
@@ -40,7 +40,7 @@ public class LoginHandlerTest extends BaseTest {
                 }
                 });
             })
-            .end("{\"username\":\"tim\",\"password\":\"sausages\"}");
+            .end("{\"username\":\"admin\",\"password\":\"password\"}");
         }
 
     }

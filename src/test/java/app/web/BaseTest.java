@@ -20,6 +20,8 @@ public abstract class BaseTest {
 
     protected Integer port = AppUtil.configInt("port") == null ? 8080 : AppUtil.configInt("port");
 
+    protected String host = AppUtil.configStr("host") == null ? "localhost" : AppUtil.configStr("host");
+
     protected Vertx vertx;
 
     @Before
@@ -63,16 +65,20 @@ public abstract class BaseTest {
         executeStatement("drop table if exists user;");
         executeStatement("drop table if exists user_roles;");
         executeStatement("drop table if exists roles_perms;");
-        executeStatement("create table user (username varchar(255), password varchar(255), password_salt varchar(255) );");
+        executeStatement("create table user (username varchar(255), password varchar(255), password_salt varchar(255), first_name varchar(50), last_name varchar(50), address varchar(255) );");
         executeStatement("create table user_roles (username varchar(255), role varchar(255));");
         executeStatement("create table roles_perms (role varchar(255), perm varchar(255));");
 
-        executeStatement("insert into user values ('tim', 'EC0D6302E35B7E792DF9DA4A5FE0DB3B90FCAB65A6215215771BF96D498A01DA8234769E1CE8269A105E9112F374FDAB2158E7DA58CDC1348A732351C38E12A0', 'C59EB438D1E24CACA2B1A48BC129348589D49303858E493FBE906A9158B7D5DC');");
-        executeStatement("insert into user_roles values ('tim', 'dev');");
-        executeStatement("insert into user_roles values ('tim', 'admin');");
-        executeStatement("insert into roles_perms values ('dev', 'commit_code');");
-        executeStatement("insert into roles_perms values ('dev', 'eat_pizza');");
-        executeStatement("insert into roles_perms values ('admin', 'merge_pr');");
+        executeStatement("insert into user values ('admin', '5B844DDCB549E9DF29A7116C38B585FE452A5E7A0352102E984E1B793F44419B6BAC8246EA19F2F3618AE29AF6F015889A18D41BD038707C1017AFCCF70CE263', 'C7AD44CBAD762A5DA0A452F9E854FDC1E0E7A52A38015F23F3EAB1D80B931DD472634DFAC71CD34EBC35D16AB7FB8A90C81F975113D6C7538DC69DD8DE9077EC', 'Admin', '', 'At main office');");
+        executeStatement("insert into user values ('jhon', '42F2E57DB605380D4ED651E390B08FCAC9CF29F42E523A07FC3FB0B73DCF3D813C164F6F75B5508DCF121895692DC7BE438CA5860C354073C95EC55B93CFB35D', '74591AF8230F8D40BCC8143DC743B5AB0A76FADD63D2E7BB21D570A265C49DDD6E3FCFF0E7BEC5BF0C676F3C38A76283D437656CA25F29173721D0219CF7A5A8', 'Jhon', 'Doe', '21st Street');");
+        executeStatement("insert into user_roles values ('admin', 'admin');");
+        executeStatement("insert into user_roles values ('jhon', 'user');");
+        executeStatement("insert into roles_perms values ('user', 'manage_profile');");
+        executeStatement("insert into roles_perms values ('admin', 'manage_user');");
+
+        executeStatement("drop table if exists item;");
+        executeStatement("create table item (id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, title varchar(100) default null, description varchar(255));");
+        executeStatement("insert into item (title, description) values('note title', 'This is note for you');");
     }
 
     private void executeStatement(String sql) throws SQLException {

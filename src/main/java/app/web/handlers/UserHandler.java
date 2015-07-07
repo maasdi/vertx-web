@@ -1,123 +1,194 @@
 package app.web.handlers;
 
+import app.web.AppUtil;
+import app.web.SQLUtil;
 import app.web.annotations.RouteHandler;
 import app.web.annotations.RouteMapping;
 import app.web.annotations.RouteMethod;
+
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RouteHandler("/api/users")
 public class UserHandler {
 
-    // sample
-    private final JsonArray users = new JsonArray();
-
-    private int counter = 1;
-
-    public UserHandler() {
-        init();
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserHandler.class);
 
     @RouteMapping(method = RouteMethod.GET)
     public Handler<RoutingContext> list() {
         return ctx -> {
-            ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-            ctx.response().end(users.encode());
+            LOGGER.debug("Start get list");
+            JDBCClient client = AppUtil.getJdbcClient(Vertx.vertx());
+
+            client.getConnection(conn -> {
+                LOGGER.debug("Succeed {}", conn.succeeded());
+                if (conn.failed()) {
+                    LOGGER.error(conn.cause().getMessage(), conn.cause());
+                    ctx.fail(400);
+                }
+
+                SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user", rs -> {
+                    JsonArray users = new JsonArray();
+                    for (JsonObject result : rs.getRows()) {
+                        users.add(result);
+                    }
+
+                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+                    ctx.response().end(users.encode());
+
+                    SQLUtil.close(conn.result());
+                });
+            });
         };
     }
 
     @RouteMapping(method = RouteMethod.POST)
     public Handler<RoutingContext> add() {
         return ctx -> {
-            JsonObject newUser = ctx.getBodyAsJson();
-            newUser.put("id", counter++);
-            users.add(newUser);
+            JsonObject user = ctx.getBodyAsJson();
+            String username = user.getString("username");
+            String password = user.getString("password");
+            String firstName = user.getString("first_name");
+            String lastName = user.getString("last_name");
+            String address = user.getString("address");
 
-            ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-            ctx.response().end(newUser.encode());
+            if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+                LOGGER.error("Username and Password cannot be null");
+                JsonObject error = new JsonObject();
+                error.put("error", "Username and Password cannot be null");
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+            }
+
+            String salt = AppUtil.computeHash(username, null, "SHA-512");
+            String passwordHash = AppUtil.computeHash(password, salt, "SHA-512");
+
+            JDBCClient client = AppUtil.getJdbcClient(Vertx.vertx());
+
+            client.getConnection(conn -> {
+
+                if (conn.failed()) {
+                    LOGGER.error(conn.cause().getMessage(), conn.cause());
+                    ctx.fail(400);
+                }
+
+                SQLUtil.query(conn.result(), "select * from user where username = ?", new JsonArray().add(username), rs -> {
+                    if (rs.getResults().size() >= 1) {
+                        SQLUtil.close(conn.result());
+                        LOGGER.error("User with username {} already exists..", username);
+                        JsonObject error = new JsonObject();
+                        error.put("error", "User with username " + username+ " already exists");
+                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+                    }
+
+                    JsonArray params = new JsonArray();
+                    params.add(username).add(passwordHash).add(salt).add(firstName).add(lastName).add(address);
+                    SQLUtil.update(conn.result(), "insert into user (username, password, password_salt, first_name, last_name, address) values (?, ?, ?, ?, ?, ?)", params, insert -> {
+                        SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), rs2 -> {
+                            SQLUtil.close(conn.result());
+                            ctx.response().end(rs2.getRows().get(0).encode());
+                        });
+                    });
+                });
+            });
         };
     }
 
-    @RouteMapping(value = "/:id", method = RouteMethod.GET)
+    @RouteMapping(value = "/:username", method = RouteMethod.GET)
     public Handler<RoutingContext> edit() {
         return ctx -> {
-                String param = ctx.request().getParam("id");
-                if (param == null)
-                    ctx.fail(404);
+            String username = ctx.request().getParam("username");
+            if (StringUtils.isBlank(username)) {
+                LOGGER.error("Username is blank");
+                ctx.fail(404);
+            }
 
-                Integer id = Integer.valueOf(param);
-                for (JsonObject user : (List<JsonObject>) users.getList()) {
-                    if (user.getInteger("id").equals(id)) {
-                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(user.encode());
-                    }
+            JDBCClient client = AppUtil.getJdbcClient(Vertx.vertx());
+            client.getConnection(conn -> {
+
+                if (conn.failed()) {
+                    LOGGER.error(conn.cause().getMessage(), conn.cause());
+                    ctx.fail(400);
                 }
+
+                SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), res -> {
+                    SQLUtil.close(conn.result());
+                    if (res.getRows().size() == 1) {
+                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(res.getRows().get(0).encode());
+                    } else {
+                        JsonObject error = new JsonObject();
+                        error.put("error", "Record not found");
+                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").setStatusCode(205).end(error.encode());
+                    }
+                });
+            });
         };
     }
 
-    @RouteMapping(value = "/:id", method = RouteMethod.PUT)
+    @RouteMapping(value = "/:username", method = RouteMethod.PUT)
     public Handler<RoutingContext> update() {
         return ctx -> {
-            String param = ctx.request().getParam("id");
-            if (param == null)
+            JsonObject user = ctx.getBodyAsJson();
+            String username = user.getString("username");
+            if (StringUtils.isBlank(username)) {
+                LOGGER.error("Username is blank");
                 ctx.fail(404);
-
-            JsonObject updateUser = ctx.getBodyAsJson();
-            Integer id = Integer.valueOf(param);
-            for (JsonObject user : (List<JsonObject>) users.getList()) {
-                if (user.getInteger("id").equals(id)) {
-                    users.remove(user);
-                    users.add(updateUser);
-                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(updateUser.encode());
-                }
             }
+
+            String firstName = user.getString("first_name");
+            String lastName = user.getString("last_name");
+            String address = user.getString("address");
+
+            JDBCClient client = AppUtil.getJdbcClient(Vertx.vertx());
+            client.getConnection(conn -> {
+                if (conn.failed()) {
+                    LOGGER.error(conn.cause().getMessage(), conn.cause());
+                    ctx.fail(404);
+                }
+
+                JsonArray params = new JsonArray();
+                params.add(firstName).add(lastName).add(address).add(username);
+                SQLUtil.update(conn.result(), "update user set first_name = ?, last_name = ?, address = ? where username = ?", params, res -> {
+                    SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), rs -> {
+                        SQLUtil.close(conn.result());
+                        ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(rs.getRows().get(0).encode());
+                    });
+                });
+            });
         };
     }
 
-    @RouteMapping(value = "/:id", method = RouteMethod.DELETE)
+    @RouteMapping(value = "/:username", method = RouteMethod.DELETE)
     public Handler<RoutingContext> delete() {
         return ctx -> {
-            String param = ctx.request().getParam("id");
-            if (param == null)
+            String username = ctx.request().getParam("username");
+            if (StringUtils.isBlank(username)) {
+                LOGGER.error("Username is blank");
                 ctx.fail(404);
-
-            Integer id = Integer.valueOf(param);
-            JsonObject deleteUser = null;
-            for (JsonObject user : (List<JsonObject>) users.getList()) {
-                if (user.getInteger("id").equals(id)) {
-                    deleteUser = user;
-                    break;
-                }
             }
 
-            if (deleteUser == null)
-                ctx.fail(505);
+            JDBCClient client = AppUtil.getJdbcClient(Vertx.vertx());
+            client.getConnection(conn -> {
+                if (conn.failed()) {
+                    LOGGER.error(conn.cause().getMessage(), conn.cause());
+                    ctx.fail(404);
+                }
 
-            users.remove(deleteUser);
-            ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end();
+                SQLUtil.update(conn.result(), "delete from user where username = ?", new JsonArray().add(username), res -> {
+                    SQLUtil.close(conn.result());
+                    ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end();
+                });
+
+            });
         };
     }
 
-    private void init() {
-        // sample data, will update later
-        JsonObject user = new JsonObject();
-        users.add(user);
-        user.put("id", counter++);
-        user.put("username", "maasdianto");
-        user.put("firstName", "Maas");
-        user.put("lastName", "Dianto");
-        user.put("address", "15A-32-2 Mont Kiara Pines Condominium");
-
-        JsonObject user2 = new JsonObject();
-        users.add(user2);
-        user2.put("id", counter++);
-        user2.put("username", "jhon");
-        user2.put("firstName", "Jhon");
-        user2.put("lastName", "Doe");
-        user2.put("address", "Kuala Lumpur");
-    }
 }

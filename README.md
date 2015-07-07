@@ -10,7 +10,9 @@ The build.gradle uses the Gradle shadowJar plugin to assemble the application an
 
 To build the "fat jar"
 
-    ./gradlew shadowJar
+    1. Make sure you have MySQLServer and execute database scripts (see : src/main/resources/sql/scripts.sql)
+    2. Verify app config and change if needed (see : src/main/resources/config.json)
+    3. ./gradlew shadowJar
 
 To run the fat jar:
 
@@ -24,13 +26,19 @@ Now point your browser at http://localhost:8080
 Writing code in verticles allow you to scale it more easily, e.g. let's say you have 8 cores on your server and you
 want to utilise them all, you can deploy 8 instances as follows:
 
-java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -instances 8
+    java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -instances 8
 
 You can also enable clustering and ha at the command line, e.g.
 
-java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -cluster
+    java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -cluster
 
-java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -ha
+    java -jar build/libs/vertx-web-1.0.0-SNAPSHOT-fat.jar -ha
 
 Please see the docs for a full list of Vert.x command line options.
 
+## Things I want todo
+    1. Validation, right now there's no input validation
+    2. Upload File sample
+    3. Websocket sample, eg: provide chatting box for logged in user
+    4. EventBus sample
+    5. More on verticle

@@ -5,7 +5,7 @@
              ng-class="{'active':dashboard.isCurrentItem(item.id)}">
 
             <button type="button" class="close" ng-click="dashboard.deleteItem(item.id)">&times;</button>
-            <h3>{{item.name}}</h3>
+            <h3>{{item.title}}</h3>
 
             <p><strong>{{item.description}}</strong></p>
         </div>
@@ -21,7 +21,7 @@
             <div class="form-group">
                 <label>Item Name</label>
                 <input type="text" class="form-control"
-                       ng-model="dashboard.newItem.name"
+                       ng-model="dashboard.newItem.title"
                        placeholder="Enter name">
             </div>
             <div class="form-group">
@@ -35,14 +35,14 @@
     </div>
     <!-- EDITING -->
     <div ng-if="dashboard.isEditing" class="col-xs-12">
-        <h4>Editing {{dashboard.editedItem.name}}</h4>
+        <h4>Editing {{dashboard.editedItem.title}}</h4>
         <hr/>
         <form class="edit-form" role="form"
               ng-submit="dashboard.updateItem(dashboard.editedItem)" novalidate>
             <div class="form-group">
                 <label>Item Name</label>
                 <input type="text" class="form-control"
-                       ng-model="dashboard.editedItem.name"
+                       ng-model="dashboard.editedItem.title"
                        placeholder="Enter name">
             </div>
             <div class="form-group">
