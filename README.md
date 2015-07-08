@@ -38,8 +38,8 @@ Please see the docs for a full list of Vert.x command line options.
 
 #Things I want todo
 - [x] CRUD
-- [] Validation, right now there's no input validation
+- [ ] Validation, right now there's no input validation
 - [x] Upload File sample
-- [] Websocket sample, eg: provide chatting box for logged in user
-- [] EventBus sample
-- [] More on verticle
+- [ ] Websocket sample, eg: provide chatting box for logged in user
+- [ ] EventBus sample
+- [ ] More on verticle
