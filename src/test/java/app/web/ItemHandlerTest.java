@@ -65,16 +65,17 @@ public class ItemHandlerTest extends BaseTest {
                     resp.bodyHandler(body -> {
                         try {
                             context.assertEquals(200, resp.statusCode());
-                            context.assertTrue(body.toString().contains(row.getString("title")));
+                            context.assertTrue(body.toString().contains(row.getString("TITLE")));
                         } finally {
                             client.close();
                             async.complete();
                         }
                     });
                 });
-            } finally {
+            } catch (Exception e) {
                 client.close();
                 async.complete();
+                context.fail(e);
             }
         });
     }
@@ -99,10 +100,11 @@ public class ItemHandlerTest extends BaseTest {
                             async.complete();
                         }
                     });
-                }).end("{\"id\":\""+row.getInteger("id")+"\", \"title\" : \"note title update\", \"description\" : \"Description updated\"}");
-            } finally {
+                }).end("{\"id\":\""+row.getInteger("ID")+"\", \"title\" : \"note title update\", \"description\" : \"Description updated\"}");
+            } catch (Exception e){
                 client.close();
                 async.complete();
+                context.fail(e);
             }
         });
         }
@@ -125,9 +127,10 @@ public class ItemHandlerTest extends BaseTest {
                         async.complete();
                     }
                 }).end();
-            } finally {
+            } catch (Exception e) {
                 client.close();
                 async.complete();
+                context.fail(e);
             }
         });
         }

@@ -36,6 +36,7 @@ public abstract class BaseTest {
             onBefore(context);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
+            context.fail(ex);
         }
     }
 

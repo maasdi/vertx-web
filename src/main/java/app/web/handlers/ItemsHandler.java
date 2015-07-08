@@ -111,7 +111,7 @@ public class ItemsHandler {
     public Handler<RoutingContext> update() {
         return ctx -> {
             JsonObject item = ctx.getBodyAsJson();
-            Integer id = item.getInteger("id");
+            String id = item.getString("id");
             if (id == null) {
                 LOGGER.error("ID is blank");
                 JsonObject error = new JsonObject();
@@ -135,7 +135,7 @@ public class ItemsHandler {
                 }
 
                 JsonArray params = new JsonArray();
-                params.add(title).add(desc).add(id);
+                params.add(title).add(desc).add(Integer.valueOf(id));
                 SQLUtil.update(conn.result(), "update item set title = ?, description = ? where id = ?", params, res -> {
                     SQLUtil.query(conn.result(), "select id, title, description from item where id = ?", new JsonArray().add(Integer.valueOf(id)), rs -> {
                         SQLUtil.close(conn.result());
