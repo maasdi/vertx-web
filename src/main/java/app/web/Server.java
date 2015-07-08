@@ -50,7 +50,6 @@ public class Server extends AbstractVerticle {
             AuthProvider authProvider = getAuthProvider();
             router.route().handler(UserSessionHandler.create(authProvider));
 
-            router.route("/secured/*").handler(RedirectAuthHandler.create(authProvider, "/"));
             router.route("/api/*").handler(getAPIInterceptorHandler());
 
             // registerHandlers

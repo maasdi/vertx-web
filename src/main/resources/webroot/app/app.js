@@ -33,11 +33,39 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
                 controller: 'UserEditCtrl',
                 controllerAs: 'useredit'
             })
+            .state('upload', {
+                url: '/upload',
+                templateUrl: 'app/templates/upload.tmpl.html',
+                controller: 'UploadCtrl',
+                controllerAs: 'upload'
+            })
+            .state('uploadview', {
+                url: '/upload/:filename',
+                templateUrl: 'app/templates/uploadview.tmpl.html',
+                controller: 'UploadViewCtrl',
+                controllerAs: 'uploadview'
+            })
         ;
 
         $urlRouterProvider.otherwise('/dashboard');
 
         $httpProvider.interceptors.push('APIInterceptor');
+    })
+    .directive('fileModel', function ($parse) {
+        return {
+            restrict: 'A',
+            link: function(scope, element, attrs) {
+                console.log(attrs);
+                var model = $parse(attrs.fileModel);
+                var modelSetter = model.assign;
+
+                element.bind('change', function(){
+                    scope.$apply(function(){
+                        modelSetter(scope, element[0].files[0]);
+                    });
+                });
+            }
+        };
     })
     .service('APIInterceptor', function($rootScope, UserContext) {
         var service = this;
@@ -59,9 +87,22 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
             return response;
         };
     })
+    .service('UploadService', function ($http, ENDPOINT_URI) {
+        var service = this;
+
+        service.uploadFileToUrl = function(file){
+            var fd = new FormData();
+            fd.append('file', file);
+            return $http.post(ENDPOINT_URI + '/upload', fd, {
+                transformRequest: angular.identity,
+                headers: {'Content-Type': undefined}
+            });
+        }
+    })
     .service('UserContext', function(store) {
         var service = this,
-            currentUser = null;
+            currentUser = null,
+            userPermissions = [];
 
         service.setCurrentUser = function(user) {
             currentUser = user;
@@ -75,6 +116,31 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
             }
             return currentUser;
         };
+
+        service.setPermissions = function(permissions) {
+            userPermissions = permissions;
+            store.set('permissions', permissions);
+            return userPermissions;
+        };
+
+        service.resetPermissions = function() {
+            userPermissions = [];
+        };
+
+        service.isPermitted = function(permission) {
+            if (!userPermissions) {
+                userPermissions = store.get('permissions');
+            }
+            if (userPermissions.length > 0) {
+                for (var i = 0; i  < userPermissions.length; i++) {
+                    var entry = userPermissions[i];
+                    if (permission === entry.perm) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
     })
     .service('UserService', function($http, ENDPOINT_URI) {
@@ -99,6 +165,11 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
         service.deleteUser = function(username) {
             return $http.delete(ENDPOINT_URI + '/users/' + username);
         };
+
+        service.getUserPermissions = function() {
+            return $http.post(ENDPOINT_URI + '/permission');
+        }
+
     })
     .service('LoginService', function($http, BASE_URI) {
         var service = this;
@@ -175,13 +246,23 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
         login.submit = submit;
         login.message = null;
     })
-    .controller('MainCtrl', function ($rootScope, $state, LoginService, UserContext) {
+    .controller('MainCtrl', function ($rootScope, $state, LoginService, UserService, UserContext) {
         var main = this;
+
+        function initPermission() {
+            UserService.getUserPermissions()
+                .then(function(response) {
+                    UserContext.setPermissions(response.data);
+                }, function(error) {
+                   console.log(error);
+                });
+        }
 
         function logout() {
             LoginService.logout()
                 .then(function(response) {
                     main.currentUser = UserContext.setCurrentUser(null);
+                    UserContext.resetPermissions();
                     $state.go('login');
                 }, function(error) {
                     console.log(error);
@@ -190,15 +271,22 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
 
         $rootScope.$on('authorized', function() {
             main.currentUser = UserContext.getCurrentUser();
+            initPermission();
         });
 
         $rootScope.$on('unauthorized', function() {
             main.currentUser = UserContext.setCurrentUser(null);
+            UserContext.resetPermissions();
             $state.go('login');
         });
 
+        initPermission();
+
         main.logout = logout;
         main.currentUser = UserContext.getCurrentUser();
+        main.isPermitted = function(name) {
+            return UserContext.isPermitted(name);
+        }
     })
     .controller('DashboardCtrl', function(ItemsModel){
         var dashboard = this;
@@ -332,5 +420,23 @@ angular.module('VertxWeb', ['angular-storage', 'ui.router'])
 
         getById($stateParams.username);
 
+    })
+    .controller('UploadCtrl', function($state, $scope, UploadService) {
+        $scope.myFile = null;
+        $scope.filename = null;
+
+        $scope.uploadFile = function() {
+            console.log('Start to upload..');
+            var file = $scope.myFile;
+            UploadService.uploadFileToUrl(file)
+                .then(function(response) {
+                    $state.go('uploadview', {filename : response.data.filename});
+                }, function(error) {
+                   console.log(error);
+                });
+        };
+    })
+    .controller('UploadViewCtrl', function($scope, $stateParams) {
+        $scope.filename = $stateParams.filename;
     })
 ;

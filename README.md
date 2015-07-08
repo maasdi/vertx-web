@@ -36,9 +36,10 @@ You can also enable clustering and ha at the command line, e.g.
 
 Please see the docs for a full list of Vert.x command line options.
 
-## Things I want todo
-    1. Validation, right now there's no input validation
-    2. Upload File sample
-    3. Websocket sample, eg: provide chatting box for logged in user
-    4. EventBus sample
-    5. More on verticle
+#Things I want todo
+- [x] CRUD
+- [] Validation, right now there's no input validation
+- [x] Upload File sample
+- [] Websocket sample, eg: provide chatting box for logged in user
+- [] EventBus sample
+- [] More on verticle
