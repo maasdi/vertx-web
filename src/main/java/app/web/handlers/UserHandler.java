@@ -35,6 +35,15 @@ public class UserHandler {
                     ctx.fail(400);
                 }
 
+                ctx.put("conn", conn.result());
+                ctx.addHeadersEndHandler(done -> conn.result().close(close -> {
+                    if (close.failed()) {
+                        done.fail(close.cause());
+                    } else {
+                        done.complete();
+                    }
+                }));
+
                 SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user", rs -> {
                     JsonArray users = new JsonArray();
                     for (JsonObject result : rs.getRows()) {
@@ -42,8 +51,6 @@ public class UserHandler {
                     }
 
                     ctx.response().end(users.encode());
-
-                    SQLUtil.close(conn.result());
                 });
             });
         };
@@ -78,9 +85,17 @@ public class UserHandler {
                     ctx.fail(400);
                 }
 
+                ctx.put("conn", conn.result());
+                ctx.addHeadersEndHandler(done -> conn.result().close(close -> {
+                    if (close.failed()) {
+                        done.fail(close.cause());
+                    } else {
+                        done.complete();
+                    }
+                }));
+
                 SQLUtil.query(conn.result(), "select * from user where username = ?", new JsonArray().add(username), rs -> {
                     if (rs.getResults().size() >= 1) {
-                        SQLUtil.close(conn.result());
                         LOGGER.error("User with username {} already exists..", username);
                         JsonObject error = new JsonObject();
                         error.put("error", "User with username " + username+ " already exists");
@@ -91,7 +106,6 @@ public class UserHandler {
                     params.add(username).add(passwordHash).add(salt).add(firstName).add(lastName).add(address);
                     SQLUtil.update(conn.result(), "insert into user (username, password, password_salt, first_name, last_name, address) values (?, ?, ?, ?, ?, ?)", params, insert -> {
                         SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), rs2 -> {
-                            SQLUtil.close(conn.result());
                             ctx.response().end(rs2.getRows().get(0).encode());
                         });
                     });
@@ -117,8 +131,16 @@ public class UserHandler {
                     ctx.fail(400);
                 }
 
+                ctx.put("conn", conn.result());
+                ctx.addHeadersEndHandler(done -> conn.result().close(close -> {
+                    if (close.failed()) {
+                        done.fail(close.cause());
+                    } else {
+                        done.complete();
+                    }
+                }));
+
                 SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), res -> {
-                    SQLUtil.close(conn.result());
                     if (res.getRows().size() == 1) {
                         ctx.response().end(res.getRows().get(0).encode());
                     } else {
@@ -152,11 +174,19 @@ public class UserHandler {
                     ctx.fail(404);
                 }
 
+                ctx.put("conn", conn.result());
+                ctx.addHeadersEndHandler(done -> conn.result().close(close -> {
+                    if (close.failed()) {
+                        done.fail(close.cause());
+                    } else {
+                        done.complete();
+                    }
+                }));
+
                 JsonArray params = new JsonArray();
                 params.add(firstName).add(lastName).add(address).add(username);
                 SQLUtil.update(conn.result(), "update user set first_name = ?, last_name = ?, address = ? where username = ?", params, res -> {
                     SQLUtil.query(conn.result(), "select username, first_name, last_name, address from user where username = ?", new JsonArray().add(username), rs -> {
-                        SQLUtil.close(conn.result());
                         ctx.response().end(rs.getRows().get(0).encode());
                     });
                 });
@@ -180,8 +210,16 @@ public class UserHandler {
                     ctx.fail(404);
                 }
 
+                ctx.put("conn", conn.result());
+                ctx.addHeadersEndHandler(done -> conn.result().close(close -> {
+                    if (close.failed()) {
+                        done.fail(close.cause());
+                    } else {
+                        done.complete();
+                    }
+                }));
+
                 SQLUtil.update(conn.result(), "delete from user where username = ?", new JsonArray().add(username), res -> {
-                    SQLUtil.close(conn.result());
                     ctx.response().end();
                 });
 

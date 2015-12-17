@@ -10,6 +10,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.jdbc.JDBCAuth;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.*;
@@ -108,20 +109,27 @@ public class Server extends AbstractVerticle {
                 RouteMethod routeMethod = mapping.method();
                 String url = root + mapping.value();
                 Handler<RoutingContext> methodHandler = (Handler<RoutingContext>) method.invoke(instance);
+                Handler<RoutingContext> failHandler = ctx -> {
+                    SQLConnection conn = ctx.get("conn");
+                    if (conn != null) {
+                        conn.close(v -> {
+                        });
+                    }
+                };
                 LOGGER.debug("Register New Handler -> {}:{}", routeMethod, url);
                 switch (routeMethod) {
                     case POST:
-                        router.post(url).handler(methodHandler);
+                        router.post(url).handler(methodHandler).failureHandler(failHandler);
                         break;
                     case PUT:
-                        router.put(url).handler(methodHandler);
+                        router.put(url).handler(methodHandler).failureHandler(failHandler);
                         break;
                     case DELETE:
-                        router.delete(url).handler(methodHandler);
+                        router.delete(url).handler(methodHandler).failureHandler(failHandler);
                         break;
                     case GET: // fall through
                     default:
-                        router.get(url).handler(methodHandler);
+                        router.get(url).handler(methodHandler).failureHandler(failHandler);
                         break;
                 }
             }

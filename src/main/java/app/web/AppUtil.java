@@ -53,20 +53,26 @@ public class AppUtil {
         return config.getInteger(key);
     }
 
+    private static JDBCClient jdbcClient;
+
     public static JDBCClient getJdbcClient(Vertx vertx) {
-        JsonObject config = new JsonObject()
-                .put("url", AppUtil.configStr("db.url"))
-                .put("driver_class", AppUtil.configStr("db.driver_class"));
+        if (jdbcClient == null) {
+            JsonObject config = new JsonObject()
+                    .put("url", AppUtil.configStr("db.url"))
+                    .put("driver_class", AppUtil.configStr("db.driver_class"));
 
-        String username = AppUtil.configStr("db.user");
-        if (StringUtils.isNotBlank(username))
-            config.put("user", username);
+            String username = AppUtil.configStr("db.user");
+            if (StringUtils.isNotBlank(username))
+                config.put("user", username);
 
-        String password = AppUtil.configStr("db.password");
-        if (StringUtils.isNotBlank(password))
-            config.put("password", password);
+            String password = AppUtil.configStr("db.password");
+            if (StringUtils.isNotBlank(password))
+                config.put("password", password);
 
-        return JDBCClient.createShared(vertx, config);
+            jdbcClient = JDBCClient.createShared(vertx, config);
+        }
+
+        return jdbcClient;
     }
 
     private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
